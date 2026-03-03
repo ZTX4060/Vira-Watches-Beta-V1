@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ViraWatches | Premium Marketplace</title>
+    <style>
+        :root { --primary: #000; --accent: #FF0000; --text: #fff; --border: #1A1A1A; --card: #080808; --modal-bg: rgba(0,0,0,0.95); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--primary); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+
+        /* Navigation */
+        header { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 8%; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.9); position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(10px); }
+        .logo { font-weight: 900; letter-spacing: 3px; font-size: 1.2rem; text-decoration: none; color: #fff; }
+        .logo span { color: var(--accent); }
+        
+        .nav-right { display: flex; align-items: center; gap: 25px; }
+        .wallet-display { font-size: 0.7rem; font-weight: 900; color: #00FF66; border: 1px solid #111; padding: 5px 12px; border-radius: 20px; }
+        .auth-btn { color: #fff; text-decoration: none; font-size: 0.75rem; font-weight: bold; border: 1px solid #333; padding: 8px 20px; transition: 0.3s; }
+        .auth-btn:hover { background: #fff; color: #000; }
+        
+        .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; background-size: cover; background-position: center; border: 1px solid #333; cursor: pointer; }
+
+        /* Hero */
+        .hero { padding: 100px 8% 60px; text-align: center; border-bottom: 1px solid var(--border); }
+        .hero h1 { font-size: 4rem; letter-spacing: -3px; margin-bottom: 10px; text-transform: uppercase; }
+        .hero p { color: #444; text-transform: uppercase; letter-spacing: 5px; font-size: 0.8rem; font-weight: bold; }
+
+        /* Marketplace */
+        .market-container { padding: 60px 8%; }
+        .grid-header { margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center; }
+        .grid-header h2 { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 40px; }
+        .watch-card { background: var(--card); border: 1px solid var(--border); padding: 25px; transition: 0.5s cubic-bezier(0.19, 1, 0.22, 1); position: relative; cursor: pointer; }
+        .watch-card:hover { border-color: var(--accent); transform: translateY(-10px); }
+        
+        .watch-img { width: 100%; height: 280px; background-color: #050505; background-position: center; background-size: cover; margin-bottom: 20px; }
+        .watch-info h3 { font-size: 1.2rem; margin-bottom: 5px; font-weight: 800; }
+        .watch-info p { color: #555; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 15px; }
+        .price { color: var(--accent); font-weight: 900; font-size: 1.3rem; margin-bottom: 20px; }
+        
+        .sold-tag { position: absolute; top: 20px; right: 20px; background: var(--accent); color: white; padding: 5px 15px; font-size: 0.6rem; font-weight: 900; z-index: 10; }
+
+        /* Luxury Modal */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: #050505; border: 1px solid var(--border); width: 90%; max-width: 900px; padding: 40px; position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        .close-modal { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 2rem; cursor: pointer; }
+        
+        .spec-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #111; font-size: 0.8rem; }
+        .spec-label { color: #444; text-transform: uppercase; }
+        .btn-buy { background: var(--accent); color: white; border: none; padding: 15px; width: 100%; font-weight: 900; margin-top: 30px; cursor: pointer; }
+        .btn-buy:disabled { background: #222; cursor: not-allowed; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="index.html" class="logo">VIRA<span>WATCHES</span></a>
+    <div class="nav-right">
+        <div id="wallet-wrap" class="wallet-display hidden">WALLET: $<span id="user-wallet">0.00</span></div>
+        <a href="sign-in.html" id="auth-link" class="auth-btn">SIGN IN</a>
+        <div id="user-profile" class="hidden" onclick="location.href='dashboard.html'" style="display: flex; align-items: center; gap: 15px; cursor: pointer;">
+            <div id="nav-avatar" class="avatar"></div>
+        </div>
+    </div>
+</header>
+
+<section class="hero">
+    <h1>Vira Marketplace</h1>
+    <p>Exclusive Horology & Private Concierge</p>
+</section>
+
+<div class="market-container">
+    <div class="grid-header">
+        <h2>Live Inventory</h2>
+        <span style="color: #222; font-size: 0.7rem;" id="count-tag">SYNCING...</span>
+    </div>
+
+    <div id="market-grid" class="market-grid">
+        </div>
+</div>
+
+<div id="watch-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <div id="modal-img" style="height: 400px; background-size: cover; background-position: center;"></div>
+        <div class="modal-info">
+            <h2 id="m-brand" style="font-size: 2rem; margin-bottom: 10px;"></h2>
+            <p id="m-model" style="color: #555; margin-bottom: 20px;"></p>
+            
+            <div class="spec-row"><span class="spec-label">Condition</span><span id="m-cond"></span></div>
+            <div class="spec-row"><span class="spec-label">Movement</span><span>Automatic</span></div>
+            <div class="spec-row"><span class="spec-label">Case Size</span><span>40mm</span></div>
+            
+            <div id="m-price" style="font-size: 1.8rem; color: var(--accent); font-weight: 900; margin-top: 30px;"></div>
+            <button id="buy-action-btn" class="btn-buy" onclick="purchaseWatch()">REQUEST PURCHASE</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const session = JSON.parse(sessionStorage.getItem('active_session'));
+    let activeWatch = null;
+
+    function init() {
+        renderAuth();
+        renderMarket();
+    }
+
+    function renderAuth() {
+        if(session) {
+            document.getElementById('auth-link').classList.add('hidden');
+            document.getElementById('user-profile').classList.remove('hidden');
+            
+            // Show Wallet for Members
+            if(session.type === 'member') {
+                document.getElementById('wallet-wrap').classList.remove('hidden');
+                document.getElementById('user-wallet').innerText = Number(session.wallet || 0).toLocaleString();
+            }
+
+            const av = document.getElementById('nav-avatar');
+            if(session.avatar) {
+                av.style.backgroundImage = `url('${session.avatar}')`;
+            } else {
+                const colors = ['#FF0000', '#0044FF'];
+                av.style.backgroundColor = colors[session.name.length % 2];
+                av.innerText = session.name.charAt(0).toUpperCase();
+                av.style.color = "#fff";
+            }
+        }
+    }
+
+    function renderMarket() {
+        const grid = document.getElementById('market-grid');
+        const inv = JSON.parse(localStorage.getItem('vira_inv') || '[]');
+        document.getElementById('count-tag').innerText = `${inv.length} PIECES AVAILABLE`;
+
+        grid.innerHTML = inv.map(w => `
+            <div class="watch-card" onclick="openModal(${w.id})">
+                ${w.status === 'SOLD' ? '<div class="sold-tag">SOLD</div>' : ''}
+                <div class="watch-img" style="background-image: url('${w.img}')"></div>
+                <div class="watch-info">
+                    <h3>${w.brand}</h3>
+                    <p>${w.model}</p>
+                    <div class="price">$${Number(w.price).toLocaleString()}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function openModal(id) {
+        const inv = JSON.parse(localStorage.getItem('vira_inv'));
+        activeWatch = inv.find(x => x.id == id);
+        
+        document.getElementById('modal-img').style.backgroundImage = `url('${activeWatch.img}')`;
+        document.getElementById('m-brand').innerText = activeWatch.brand;
+        document.getElementById('m-model').innerText = activeWatch.model;
+        document.getElementById('m-price').innerText = `$${Number(activeWatch.price).toLocaleString()}`;
+        document.getElementById('m-cond').innerText = activeWatch.cond || "New";
+
+        const btn = document.getElementById('buy-action-btn');
+        if(activeWatch.status === 'SOLD') {
+            btn.innerText = "OUT OF STOCK";
+            btn.disabled = true;
+        } else {
+            btn.innerText = "REQUEST PURCHASE";
+            btn.disabled = false;
+        }
+
+        document.getElementById('watch-modal').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('watch-modal').classList.remove('active');
+    }
+
+    function purchaseWatch() {
+        if(!session) {
+            alert("Identity Verification Required. Redirecting to Sign In...");
+            location.href = 'sign-in.html';
+            return;
+        }
+
+        if(session.type !== 'member') {
+            alert("Staff accounts cannot make purchases.");
+            return;
+        }
+
+        const price = Number(activeWatch.price);
+        if(session.wallet < price) {
+            alert("Insufficient Virtual Funds. Please top up in your Dashboard.");
+            return;
+        }
+
+        // Processing Transaction
+        session.wallet -= price;
+        sessionStorage.setItem('active_session', JSON.stringify(session));
+        
+        // Update Inventory Status
+        let inv = JSON.parse(localStorage.getItem('vira_inv'));
+        const target = inv.find(x => x.id == activeWatch.id);
+        target.status = 'SOLD';
+        localStorage.setItem('vira_inv', JSON.stringify(inv));
+
+        // Generate Ticket for Trainee
+        let tix = JSON.parse(localStorage.getItem('vira_tix') || '[]');
+        tix.push({ user: session.name, item: `${activeWatch.brand} ${activeWatch.model}`, status: 'Pending', id: Date.now() });
+        localStorage.setItem('vira_tix', JSON.stringify(tix));
+
+        alert("TRANSACTION SUCCESSFUL. The amount has been deducted. Our Trainee team will contact you via Dashboard Chat.");
+        location.reload();
+    }
+
+    init();
+</script>
+</body>
+</html>

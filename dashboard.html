@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ViraWatches | Dashboard 1V</title>
+    <style>
+        :root { --primary: #000; --accent: #FF0000; --border: #1A1A1A; --card-bg: #080808; --text: #fff; --success: #00FF66; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--primary); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+
+        aside { width: 260px; border-right: 1px solid var(--border); padding: 2rem; display: flex; flex-direction: column; background: #020202; }
+        .nav-item { padding: 12px; color: #555; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+        .nav-item.active { border-left: 2px solid var(--accent); color: #fff; background: #111; }
+
+        main { flex: 1; padding: 2.5rem; overflow-y: auto; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); padding: 20px; margin-bottom: 20px; }
+        
+        .chat-area { height: 250px; background: #000; border: 1px solid #111; overflow-y: auto; padding: 15px; margin-bottom: 10px; }
+        .msg { font-size: 0.8rem; margin-bottom: 8px; padding: 5px 10px; border-radius: 4px; width: fit-content; }
+        .msg.me { background: #222; margin-left: auto; }
+        .msg.them { background: var(--accent); }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th { text-align: left; color: var(--accent); padding: 10px; border-bottom: 1px solid #222; font-size: 0.6rem; }
+        td { padding: 10px; border-bottom: 1px solid #050505; }
+
+        .hidden { display: none !important; }
+        input, select { background: #000; border: 1px solid #222; color: #fff; padding: 10px; width: 100%; margin-top: 5px; }
+        .btn { background: var(--accent); color: #fff; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 0.7rem; }
+    </style>
+</head>
+<body>
+
+<aside>
+    <div style="font-weight:900; margin-bottom:2rem;">VIRA<span>WATCHES</span></div>
+    <div class="nav-item active" onclick="showSection('overview')">Overview</div>
+    <div id="nav-inv" class="nav-item hidden" onclick="showSection('inventory')">Inventory Control</div>
+    <div id="nav-tix" class="nav-item hidden" onclick="showSection('tickets')">Tickets & Chat</div>
+    <div id="nav-logs" class="nav-item hidden" onclick="location.href='logs.html'">Audit Logs</div>
+    <div class="nav-item" onclick="logout()" style="margin-top:auto; color:var(--accent);">Sign Out</div>
+</aside>
+
+<main>
+    <div id="overview" class="section">
+        <div class="card" id="wallet-card">
+            <p style="font-size:0.6rem; color:#444;">VIRTUAL BALANCE</p>
+            <h1 id="bal-val" style="color:var(--success);">$0.00</h1>
+        </div>
+        <div class="card">
+            <h2>System Status: Operational</h2>
+            <p id="user-info" style="font-size:0.8rem; color:#666;"></p>
+        </div>
+    </div>
+
+    <section id="inventory" class="section hidden">
+        <div class="card">
+            <h3>Add Stock</h3>
+            <input type="text" id="brand" placeholder="Brand">
+            <input type="text" id="model" placeholder="Model">
+            <input type="number" id="price" placeholder="Price">
+            <input type="text" id="img" placeholder="Image URL">
+            <button class="btn" onclick="saveToBackend()">PUSH TO SERVER</button>
+        </div>
+    </section>
+
+    <section id="tickets" class="section hidden">
+        <div class="card">
+            <h3>Purchase Requests</h3>
+            <table>
+                <thead><tr><th>Buyer</th><th>Item</th><th>Status</th><th>Chat</th></tr></thead>
+                <tbody id="tix-body"></tbody>
+            </table>
+        </div>
+        <div id="chat-window" class="card hidden">
+            <div id="chat-msgs" class="chat-area"></div>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="chat-input" placeholder="Secure message...">
+                <button class="btn" style="width:100px; margin-top:5px;" onclick="sendToBackend()">SEND</button>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    const API = "http://localhost:3000/api";
+    let session = JSON.parse(sessionStorage.getItem('active_session'));
+    let activeTix = null;
+
+    if(!session) location.href = 'sign-in.html';
+
+    function init() {
+        document.getElementById('user-info').innerText = `Identity: ${session.name} | Rank: ${session.rank}`;
+        if(session.type === 'member') document.getElementById('bal-val').innerText = `$${session.wallet.toLocaleString()}`;
+        
+        applySecurity();
+        syncData();
+    }
+
+    function applySecurity() {
+        const r = session.rank;
+        if(session.type === 'staff') {
+            document.getElementById('wallet-card').classList.add('hidden');
+            document.getElementById('nav-tix').classList.remove('hidden');
+            if(["Senior", "Manager", "Administrator"].includes(r)) document.getElementById('nav-inv').classList.remove('hidden');
+            if(r === "Administrator") document.getElementById('nav-logs').classList.remove('hidden');
+        }
+    }
+
+    async function syncData() {
+        const resp = await fetch(`${API}/sync`);
+        const data = await resp.json();
+        renderTickets(data.tickets);
+    }
+
+    async function saveToBackend() {
+        const watch = {
+            brand: document.getElementById('brand').value,
+            model: document.getElementById('model').value,
+            price: document.getElementById('price').value,
+            img: document.getElementById('img').value
+        };
+        await fetch(`${API}/inventory`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(watch)
+        });
+        alert("Server Synchronized.");
+    }
+
+    function renderTickets(tix) {
+        const body = document.getElementById('tix-body');
+        body.innerHTML = tix.map(t => `
+            <tr>
+                <td>${t.user}</td>
+                <td>${t.item}</td>
+                <td>${t.status}</td>
+                <td><button onclick="openChat('${t.id}')" style="background:#111; color:#fff; border:1px solid #333; cursor:pointer; padding:2px 10px;">OPEN</button></td>
+            </tr>
+        `).join('');
+    }
+
+    async function openChat(id) {
+        activeTix = id;
+        document.getElementById('chat-window').classList.remove('hidden');
+        const resp = await fetch(`${API}/sync`);
+        const data = await resp.json();
+        const msgs = data.chats[id] || [];
+        document.getElementById('chat-msgs').innerHTML = msgs.map(m => `
+            <div class="msg ${m.sender === session.name ? 'me' : 'them'}">${m.text}</div>
+        `).join('');
+    }
+
+    async function sendToBackend() {
+        const text = document.getElementById('chat-input').value;
+        await fetch(`${API}/chat`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ ticketId: activeTix, message: { sender: session.name, text } })
+        });
+        document.getElementById('chat-input').value = '';
+        openChat(activeTix);
+    }
+
+    function showSection(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(id).classList.remove('hidden');
+        event.currentTarget.classList.add('active');
+    }
+
+    function logout() { sessionStorage.clear(); location.href = 'sign-in.html'; }
+
+    init();
+</script>
+</body>
+</html>

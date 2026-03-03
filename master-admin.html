@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ViraWatches | Secure Access</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        :root { --primary: #000; --accent: #FF0000; --border: #1A1A1A; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--primary); color: var(--text); display: flex; align-items: center; justify-content: center; height: 100vh; perspective: 1000px; overflow: hidden; }
+        
+        .login-card { 
+            width: 380px; padding: 40px; border: 1px solid var(--border); background: #050505; 
+            transform-style: preserve-3d; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+        
+        input { width: 100%; padding: 12px; margin-bottom: 15px; background: #000; border: 1px solid #222; color: #fff; font-size: 0.8rem; outline: none; }
+        input:focus { border-color: var(--accent); }
+        
+        .btn-login { width: 100%; padding: 12px; background: var(--accent); border: none; color: #fff; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .gate-switch { margin-top: 20px; text-align: center; font-size: 0.6rem; color: #444; text-transform: uppercase; cursor: pointer; letter-spacing: 2px; transition: 0.3s; }
+        .gate-switch:hover { color: var(--accent); }
+        
+        .hidden { display: none; opacity: 0; }
+    </style>
+</head>
+<body>
+
+<div class="login-card" id="card">
+    <h2 style="margin-bottom: 30px; letter-spacing: 5px; text-align: center;">VIRA<span>WATCHES</span></h2>
+    
+    <div id="standard-portal">
+        <input type="text" id="user" placeholder="Identity">
+        <input type="password" id="pass" placeholder="Password">
+        <button class="btn-login" onclick="handleLogin()">Authorize</button>
+        <div class="gate-switch" onclick="toggleGate('master')">Terminal Access</div>
+    </div>
+
+    <div id="master-portal" class="hidden">
+        <p style="color: var(--accent); font-size: 0.6rem; margin-bottom: 15px; text-align: center; font-weight: bold;">ENCRYPTED OVERRIDE</p>
+        <input type="text" id="m-user" placeholder="Master ID">
+        <input type="password" id="m-pass" placeholder="System Key">
+        <button class="btn-login" onclick="handleMasterLogin()">Execute Override</button>
+        <div class="gate-switch" onclick="toggleGate('standard')">Return to Surface</div>
+    </div>
+</div>
+
+<script>
+    // 3D Tilt Effect
+    const card = document.getElementById('card');
+    document.addEventListener('mousemove', (e) => {
+        let x = (window.innerWidth / 2 - e.pageX) / 25;
+        let y = (window.innerHeight / 2 - e.pageY) / 25;
+        gsap.to(card, { rotationY: x, rotationX: -y, duration: 0.5 });
+    });
+
+    function toggleGate(target) {
+        const tl = gsap.timeline();
+        tl.to(card, { rotationY: 90, opacity: 0, duration: 0.3, onComplete: () => {
+            if(target === 'master') {
+                document.getElementById('standard-portal').classList.add('hidden');
+                document.getElementById('master-portal').classList.remove('hidden');
+            } else {
+                document.getElementById('master-portal').classList.add('hidden');
+                document.getElementById('standard-portal').classList.remove('hidden');
+            }
+        }});
+        tl.to(card, { rotationY: 0, opacity: 1, duration: 0.3 });
+    }
+
+    function handleMasterLogin() {
+        const u = document.getElementById('m-user').value;
+        const p = document.getElementById('m-pass').value;
+        if(u === "admin" && p === "b432-h123@789-s111") {
+            sessionStorage.setItem('active_session', JSON.stringify({
+                name: "Master Admin", rank: "Administrator", type: "staff", wallet: 9999999, isMaster: true
+            }));
+            location.href = 'master-admin.html';
+        } else {
+            gsap.to(card, { x: 10, repeat: 5, yoyo: true, duration: 0.05 });
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ViraWatches | System Audit Logs</title>
+    <style>
+        :root { --primary: #000; --accent: #FF0000; --border: #1A1A1A; --text: #fff; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--primary); color: var(--text); padding: 3rem; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+        .log-table { width: 100%; border-collapse: collapse; background: #050505; }
+        .log-table th { text-align: left; padding: 15px; background: #111; color: var(--accent); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
+        .log-table td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.8rem; color: #ccc; }
+        
+        .badge { padding: 2px 8px; border-radius: 2px; font-size: 0.6rem; font-weight: bold; text-transform: uppercase; }
+        .badge-delete { background: #421; color: #ff4444; }
+        .badge-update { background: #124; color: #00AAFF; }
+        .badge-security { background: #241; color: #00FF66; }
+
+        .btn-back { background: var(--accent); color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; font-size: 0.7rem; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="access-denied" class="hidden" style="text-align: center; margin-top: 20vh;">
+    <h1 style="color: var(--accent); font-size: 3rem;">ACCESS DENIED</h1>
+    <p>Unauthorized Personnel Only. Security Protocol 403 Active.</p>
+</div>
+
+<div id="log-content">
+    <div class="header">
+        <div>
+            <h1>System Audit Logs</h1>
+            <p style="color: #444; font-size: 0.8rem;">Beta 1V Operational Tracking</p>
+        </div>
+        <button class="btn-back" onclick="location.href='dashboard.html'">Return to Command Center</button>
+    </div>
+
+    <table class="log-table">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Staff Member</th>
+                <th>Action</th>
+                <th>Target/Entity</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="log-body">
+            </tbody>
+    </table>
+    
+    <button onclick="clearLogs()" style="margin-top: 20px; background: none; border: 1px solid #222; color: #444; cursor: pointer; padding: 5px 10px; font-size: 0.6rem;">Clear Audit History</button>
+</div>
+
+<script>
+    const session = JSON.parse(sessionStorage.getItem('active_session'));
+
+    // Security check: Only Administrator can access
+    if(!session || session.rank !== "Administrator") {
+        document.getElementById('log-content').classList.add('hidden');
+        document.getElementById('access-denied').classList.remove('hidden');
+    }
+
+    function loadLogs() {
+        const logs = JSON.parse(localStorage.getItem('vira_audit_logs') || '[]');
+        const body = document.getElementById('log-body');
+        
+        if(logs.length === 0) {
+            body.innerHTML = '<tr><td colspan="5" style="text-align:center;">No logs recorded in the current cycle.</td></tr>';
+            return;
+        }
+
+        body.innerHTML = logs.reverse().map(log => `
+            <tr>
+                <td style="color:#555;">${log.time}</td>
+                <td style="font-weight:bold;">${log.user} <span style="font-size:0.6rem; color:var(--accent);">[${log.rank}]</span></td>
+                <td><span class="badge ${getBadgeClass(log.action)}">${log.action}</span></td>
+                <td>${log.target}</td>
+                <td style="color:#00FF66;">SUCCESS</td>
+            </tr>
+        `).join('');
+    }
+
+    function getBadgeClass(action) {
+        if(action.includes('DELETE')) return 'badge-delete';
+        if(action.includes('UPDATE')) return 'badge-update';
+        return 'badge-security';
+    }
+
+    function clearLogs() {
+        if(confirm("Permanently erase all system logs?")) {
+            localStorage.setItem('vira_audit_logs', '[]');
+            loadLogs();
+        }
+    }
+
+    loadLogs();
+</script>
+</body>
+</html>
