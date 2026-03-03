@@ -2,85 +2,145 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ViraWatches | Secure Access</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ViraWatches | Authority Control</title>
     <style>
-        :root { --primary: #000; --accent: #FF0000; --border: #1A1A1A; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background: var(--primary); color: var(--text); display: flex; align-items: center; justify-content: center; height: 100vh; perspective: 1000px; overflow: hidden; }
+        :root { --primary: #000; --accent: #FF0000; --border: #222; --text: #fff; }
+        body { background: var(--primary); color: var(--text); font-family: 'Inter', sans-serif; padding: 2rem; }
         
-        .login-card { 
-            width: 380px; padding: 40px; border: 1px solid var(--border); background: #050505; 
-            transform-style: preserve-3d; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        .admin-container { max-width: 1000px; margin: 0 auto; }
+        .creation-box { background: #080808; border: 1px solid var(--border); padding: 2rem; margin-bottom: 3rem; }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+        label { display: block; font-size: 0.65rem; color: #666; text-transform: uppercase; margin-bottom: 5px; }
+        input, select { 
+            width: 100%; padding: 12px; background: #000; border: 1px solid var(--border); 
+            color: #fff; border-radius: 0;
         }
-        
-        input { width: 100%; padding: 12px; margin-bottom: 15px; background: #000; border: 1px solid #222; color: #fff; font-size: 0.8rem; outline: none; }
-        input:focus { border-color: var(--accent); }
-        
-        .btn-login { width: 100%; padding: 12px; background: var(--accent); border: none; color: #fff; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .gate-switch { margin-top: 20px; text-align: center; font-size: 0.6rem; color: #444; text-transform: uppercase; cursor: pointer; letter-spacing: 2px; transition: 0.3s; }
-        .gate-switch:hover { color: var(--accent); }
-        
-        .hidden { display: none; opacity: 0; }
+
+        table { width: 100%; border-collapse: collapse; background: #050505; border: 1px solid var(--border); }
+        th { text-align: left; color: #444; font-size: 0.65rem; text-transform: uppercase; padding: 1rem; border-bottom: 1px solid var(--border); }
+        td { padding: 1rem; border-bottom: 1px solid #111; font-size: 0.85rem; }
+
+        .rank-badge { 
+            padding: 2px 8px; font-size: 0.6rem; font-weight: bold; border: 1px solid; 
+            text-transform: uppercase; display: inline-block;
+        }
+        /* Dynamic Rank Colors */
+        .rank-trainee { color: #888; border-color: #444; }
+        .rank-junior { color: #00FF00; border-color: #00FF00; }
+        .rank-senior { color: #00AAFF; border-color: #00AAFF; }
+        .rank-moderator { color: #FF8800; border-color: #FF8800; }
+        .rank-manager { color: #AA00FF; border-color: #AA00FF; }
+        .rank-administrator { color: #FF0000; border-color: #FF0000; }
+
+        .btn { background: var(--accent); color: white; border: none; padding: 12px 24px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 0.75rem; }
+        .btn-action { background: transparent; border: 1px solid #333; color: #888; padding: 4px 8px; cursor: pointer; margin-right: 5px; }
+        .btn-action:hover { border-color: var(--accent); color: var(--accent); }
     </style>
 </head>
 <body>
 
-<div class="login-card" id="card">
-    <h2 style="margin-bottom: 30px; letter-spacing: 5px; text-align: center;">VIRA<span>WATCHES</span></h2>
-    
-    <div id="standard-portal">
-        <input type="text" id="user" placeholder="Identity">
-        <input type="password" id="pass" placeholder="Password">
-        <button class="btn-login" onclick="handleLogin()">Authorize</button>
-        <div class="gate-switch" onclick="toggleGate('master')">Terminal Access</div>
+<div class="admin-container">
+    <h1 style="letter-spacing: 2px; margin-bottom: 0.5rem;">STAFF AUTHORITY <span style="color:var(--accent)">1V</span></h1>
+    <p style="color: #444; font-size: 0.8rem; margin-bottom: 2rem;">System Managed Account Generation & Promotion Engine</p>
+
+    <div class="creation-box">
+        <div class="form-row">
+            <div>
+                <label>Employee Name</label>
+                <input type="text" id="emp-name" placeholder="Legal Name">
+            </div>
+            <div>
+                <label>Initial Rank</label>
+                <select id="emp-rank">
+                    <option value="Trainee">Trainee</option>
+                    <option value="Junior">Junior Staff</option>
+                    <option value="Senior">Senior Staff</option>
+                    <option value="Moderator">Moderator</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Administrator">Administrator</option>
+                </select>
+            </div>
+            <div>
+                <label>Security Password</label>
+                <input type="password" id="emp-pass" placeholder="Set Access Pin">
+            </div>
+        </div>
+        <button class="btn" onclick="autoGenerateStaff()">Authorize & Generate ID</button>
     </div>
 
-    <div id="master-portal" class="hidden">
-        <p style="color: var(--accent); font-size: 0.6rem; margin-bottom: 15px; text-align: center; font-weight: bold;">ENCRYPTED OVERRIDE</p>
-        <input type="text" id="m-user" placeholder="Master ID">
-        <input type="password" id="m-pass" placeholder="System Key">
-        <button class="btn-login" onclick="handleMasterLogin()">Execute Override</button>
-        <div class="gate-switch" onclick="toggleGate('standard')">Return to Surface</div>
-    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Account ID</th>
+                <th>Staff Name</th>
+                <th>Current Rank</th>
+                <th>Management</th>
+            </tr>
+        </thead>
+        <tbody id="staff-table"></tbody>
+    </table>
 </div>
 
 <script>
-    // 3D Tilt Effect
-    const card = document.getElementById('card');
-    document.addEventListener('mousemove', (e) => {
-        let x = (window.innerWidth / 2 - e.pageX) / 25;
-        let y = (window.innerHeight / 2 - e.pageY) / 25;
-        gsap.to(card, { rotationY: x, rotationX: -y, duration: 0.5 });
-    });
+    const RANKS = ["Trainee", "Junior", "Senior", "Moderator", "Manager", "Administrator"];
+    let staffDb = JSON.parse(localStorage.getItem('vira_staff')) || [];
 
-    function toggleGate(target) {
-        const tl = gsap.timeline();
-        tl.to(card, { rotationY: 90, opacity: 0, duration: 0.3, onComplete: () => {
-            if(target === 'master') {
-                document.getElementById('standard-portal').classList.add('hidden');
-                document.getElementById('master-portal').classList.remove('hidden');
-            } else {
-                document.getElementById('master-portal').classList.add('hidden');
-                document.getElementById('standard-portal').classList.remove('hidden');
-            }
-        }});
-        tl.to(card, { rotationY: 0, opacity: 1, duration: 0.3 });
+    function autoGenerateStaff() {
+        const name = document.getElementById('emp-name').value;
+        const rank = document.getElementById('emp-rank').value;
+        const pass = document.getElementById('emp-pass').value;
+
+        if(!name || !pass) return alert("Missing required fields.");
+
+        // Generate Automatic Account Number (VRA-YEAR-RANDOM)
+        const year = new Date().getFullYear();
+        const rand = Math.floor(1000 + Math.random() * 9000);
+        const accId = `VRA-${year}-${rand}`;
+
+        staffDb.push({ acc: accId, name, rank, pass });
+        localStorage.setItem('vira_staff', JSON.stringify(staffDb));
+        
+        renderTable();
+        document.getElementById('emp-name').value = '';
+        document.getElementById('emp-pass').value = '';
     }
 
-    function handleMasterLogin() {
-        const u = document.getElementById('m-user').value;
-        const p = document.getElementById('m-pass').value;
-        if(u === "admin" && p === "b432-h123@789-s111") {
-            sessionStorage.setItem('active_session', JSON.stringify({
-                name: "Master Admin", rank: "Administrator", type: "staff", wallet: 9999999, isMaster: true
-            }));
-            location.href = 'master-admin.html';
-        } else {
-            gsap.to(card, { x: 10, repeat: 5, yoyo: true, duration: 0.05 });
+    function renderTable() {
+        const table = document.getElementById('staff-table');
+        table.innerHTML = staffDb.map((emp, index) => `
+            <tr>
+                <td><code>${emp.acc}</code></td>
+                <td>${emp.name}</td>
+                <td><span class="rank-badge rank-${emp.rank.toLowerCase()}">${emp.rank}</span></td>
+                <td>
+                    <button class="btn-action" onclick="promote(${index})">Promote</button>
+                    <button class="btn-action" onclick="terminate(${index})" style="color:#555">Term</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function promote(index) {
+        let currentIdx = RANKS.indexOf(staffDb[index].rank);
+        if(currentIdx < RANKS.length - 1) {
+            staffDb[index].rank = RANKS[currentIdx + 1];
+            localStorage.setItem('vira_staff', JSON.stringify(staffDb));
+            renderTable();
         }
     }
+
+    function terminate(index) {
+        if(confirm("Revoke all access for this ID?")) {
+            staffDb.splice(index, 1);
+            localStorage.setItem('vira_staff', JSON.stringify(staffDb));
+            renderTable();
+        }
+    }
+
+    renderTable();
 </script>
+
 </body>
 </html>
